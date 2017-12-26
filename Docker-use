@@ -1,0 +1,129 @@
+Docker 容器使用：
+
+docker run -d -P training/webapp python app.py
+
+-d:让容器在后台运行。
+-P:将容器内部使用的网络端口映射到我们使用的主机上。
+
+使用 docker ps 来查看我们正在运行的容器
+
+可以指定 -p 标识来绑定指定端口。
+docker run -d -p 5000:5000 training/webapp python app.py
+容器内部的 5000 端口映射到我们本地主机的 5000 端口上。
+
+web应用容器ID为:7a38a1ad55c6 名字为：determined_swanson
+docker port 7a38a1ad55c6
+docker port determined_swanson
+
+
+docker top 来查看容器内部运行的进程
+docker top determined_swanson
+docker logs -f 7a38a1ad55c6
+
+docker inspect 来查看Docker的底层信息
+docker inspect determined_swanson
+
+docker stop determined_swanson  
+docker start determined_swanson
+
+docker rm 命令来删除不需要的容器
+docker rm determined_swanson 
+
+docker ps -l 查询最后一次创建的容器
+
+
+
+Docker 镜像的使用：
+docker images
+
+获取：docker pull ubuntu:last
+      docker pull httpd
+查找：docker search httpd
+
+
+创建镜像：
+当我们从docker镜像仓库中下载的镜像不能满足我们的需求时，我们可以通过以下两种方式对镜像进行更改。
+
+    1.从已经创建的容器中更新镜像，并且提交这个镜像
+    2.使用 Dockerfile 指令来创建一个新的镜像
+
+    更新镜像之前，我们需要使用镜像来创建一个容器。
+    docker run -t -i ubuntu:15.10 /bin/bash
+    此时ID为e218edb10161的容器，按我们的需求更改的容器 docker commit来提交容器副本
+    docker commit -m="has update" -a="runoob" e218edb10161 runoob/ubuntu:v2
+
+    -m:提交的描述信息
+
+    -a:指定镜像作者
+
+    e218edb10161：容器ID
+
+    runoob/ubuntu:v2:指定要创建的目标镜像名
+
+ docker run -t -i runoob/ubuntu:v2 /bin/bash     
+
+ Dockerfile 构建镜像：
+ 用命令 docker build ， 从零开始来创建一个新的镜像
+
+
+
+ cat Dockerfile
+
+FROM    centos:6.7
+MAINTAINER      Fisher "3115933122@qq.com"
+
+RUN     /bin/echo 'root:123456' |chpasswd
+RUN     useradd wqd
+RUN     /bin/echo 'wqd:123456' |chpasswd
+RUN     /bin/echo -e "LANG=\"en_US.UTF-8\"" >/etc/default/local
+EXPOSE  22
+EXPOSE  80
+CMD     /usr/sbin/sshd -D
+
+说明：
+每一个指令都会在镜像上创建一个新的层，每一个指令的前缀都必须是大写的。
+
+第一条FROM，指定使用哪个镜像源
+
+RUN 指令告诉docker 在镜像内执行命令，安装了什么。。。
+
+然后，我们使用 Dockerfile 文件，通过 docker build 命令来构建一个镜像。
+
+docker build -t runoob/centos:6.7 .
+    -t ：指定要创建的目标镜像名
+
+    . ：Dockerfile 文件所在目录，可以指定Dockerfile 的绝对路径
+
+
+    docker run -t -i runoob/centos:6.7  /bin/bash
+    docker tag 860c279d2fec(img_id) runoob/centos:dev
+
+
+
+Docker 容器连接
+网络端口映射
+
+    -P :是容器内部端口随机映射到主机的高端口。
+    -p : 是容器内部端口绑定到指定的主机端口。
+docker run -d -P training/webapp python app.py
+docker run -d -p 5000:5000 training/webapp python app.py
+docker run -d -p 127.0.0.1:5001:5002 training/webapp python app.py
+    可以通过访问127.0.0.1:5001来访问容器的5002端口。
+    默认都是绑定 tcp 端口，如果要绑定 UDP 端口，可以在端口后面加上 /udp。
+
+docker run -d -p 127.0.0.1:5000:5000/udp training/webapp python app.py
+
+docker ps
+docker port adoring_stonebraker 5002
+
+
+Docker容器连接
+
+端口映射并不是唯一把 docker 连接到另一个容器的方法。
+
+docker有一个连接系统允许将多个容器连接在一起，共享连接信息。
+
+docker连接会创建一个父子关系，其中父容器可以看到子容器的信息。
+
+使用--name标识来命名容器
+docker run -d -P --name runoob training/webapp python app.py
