@@ -1,0 +1,208 @@
+ docker基于go语言
+https://github.com/docker/docker
+
+packaging  封装
+distribution  分发
+deployment 部署
+runtime 运行
+
+支持版本：rhel6.5、centos6.5 ubuntu14.04 以上版本
+
+Pass  (Platform as a Service)
+
+docker引擎的基础是linux容器LXC（Linux Containers ）
+
+docker容器 理解为沙盒（Sandbox）
+
+docker三大核心概念
+镜像 Image        系统的镜像 及 应用程序的镜像
+容器 Container        从镜像创建的应用实例
+仓库 Repository        集中存放镜像文件的场所
+
+安装
+centos6
+yum install -y http://mirrors.yun-idc.com/epel/6/i386/epel-release-6-8.noarch.rpm
+http://mirrors.yun-idc.com/epel/6/x86_64/epel-release-6-8.noarch.rpm
+yum install -y docker-io
+service docker start
+docker info
+
+centos7
+yum install -y docker
+service docker start
+docker info
+service docker status
+
+docker pull centos
+
+快速高效地下载Docker镜像，最为有效的方式之一就是：使用 DaoCloud团队 (https://www.daocloud.io/)提供的服务Docker Hub Mirror。
+
+https://www.daocloud.io
+
+docker pull daocloud.io/centos:6
+docker pull daocloud.io/centos:7
+docker pull daocloud.io/library/centos:latest
+
+
+获取镜像：
+docker pull ubuntu
+docker pull ubuntu:14.04
+
+运行：
+docker run -t -i ubuntu /bin/bash
+
+查看镜像：
+docker images
+
+docker tag 添加标签：起到引用或快捷方式的作用
+
+docker tag dl.dockerpool.com:5000/ubuntu:latest  ubuntu:latest
+
+docker inspect id    获取该镜像的详细信息
+
+docker search 搜索远端仓库共享的镜像 默认为docker hub官方仓库中的镜像
+
+docker search mysql
+
+删除镜像：
+docker rmi tag|id
+
+当镜像只剩下一个标签的时候，，再使用 docker rmi 会彻底删除该镜像；
+
+docker rmi id  ：会先尝试删除所有指向该镜像的标签，然后删除该镜像文件本身；
+
+docker ps -a  查看所有容器
+
+创建镜像：
+1）容器创建
+2）本地模板导入
+3）dockerfile创建
+
+
+1）基于已有镜像的容器创建
+docker commit [options]
+
+-a ,--author=""  作者信息
+-m ,--message="" 提交消息
+-p ,--pause=true  提交时暂停容器运行
+
+启动一个镜像 并做些修改
+docker run -ti ubuntu:14.04 /bin/bash
+touch test
+exit
+记住id号
+
+docker commit -m "add new file 'test'" -a "wqd" iiiiiiddddd(id) test
+docker images
+
+
+2)本地模块导入：直接从一个操作系统模块文件导入一个镜像；用openvz的模板来创建
+openvz模板下载地址： http://openvz.org/Download/templates/precreated
+
+cat ubuntu-14.04-x86_64-minimal.tar.gz |docker import - ubuntu:14.04
+docker images
+
+存出镜像：docker save
+docker save -o ubuntu_14.04.ta ubuntu:14.04
+
+载入镜像：docker load
+docker load --input ubuntu_14.04.tar
+或
+docker load < ubuntu_14.04.tar
+
+docker images
+
+上传镜像：docker push  默认上传到 dockerhub官方仓库
+添加新标签：
+docker tag test:latest  user/test:latest
+docker push user/test:latest
+
+username:
+password:
+email:
+
+容器：容器是镜像的一个运行实例；
+
+创建容器：docker create
+
+docker create -it ubuntu:latest
+docker start ubuntu:latest
+docker run ubuntu /bin/echo "hello world"
+
+docker run -t -i ubuntu:14.04 /bin/bash
+pwd
+ls
+ps
+exit
+
+exit 命令退出之后 该容器自动处于终止状态
+
+守护态运行：docker run -d ubuntu /bin/sh -c "which true;do echo hello world; sleep 1; done"
+
+docker ps
+docker logs ce5
+
+终止容器：
+docker stop   exit   ctrl +d
+
+docker stop ec5
+
+docker kill
+docker ps -a -q
+
+
+docker stop ce5
+docker start ce5
+docker restart ce5
+docker ps
+
+
+进入容器：
+docker attach
+docker exec
+nsenter
+
+
+attach
+docker run -idt ubuntu
+docker ps
+docker attach nostalgic_hypatia
+
+exec命令
+docler exec ti iiiiiidddddd /bin/bash
+
+nsenter 工具
+yum install -y util-linux
+
+nsenter --target $PID --mount --uts --ipc --net --pid
+
+docker run -idt ubuntu
+docker ps
+PID$(docker-pid iiiiidddddd)
+10981
+nsenter --target 10981 --mount --uts --ipc --pid
+w
+ps -ef
+
+
+删除容器：
+docker rm
+-f  强制删除
+-l  删除容器连接 但保留容器
+-v  删除容器挂载的数据卷
+
+docker ps -a
+docker rm iiiiidddddd
+docker rm -f 2ea
+
+导出容器：
+docker export CONTAINER
+
+docker ps -a
+docker export ce5 >test_for_run.tar
+docker export e88a > test_for_stop.tar
+
+将这些文件传输到其他机器，在其他机器上通过导入命令 实现容器迁移；
+
+导入容器：docker import
+cat test_for_run.tar |docker import - test/ubuntu:v1.0
